@@ -44,7 +44,7 @@ def validate_and_turn(marker):
     elif orientation_marker == [5, 1]:
         rotation = 3
     marker = rot90(marker, k=rotation)
-    return marker
+    return marker, rotation
 
 
 def detect_markers(img):
@@ -81,6 +81,7 @@ def detect_markers(img):
         dtype='float32')
 
     markers_list = []
+    orientation_list = []
     for contour in contours:
         approx_curve = cv2.approxPolyDP(contour, len(contour) * 0.01, True)
         if not (len(approx_curve) == 4 and cv2.isContourConvex(approx_curve)):
@@ -108,10 +109,11 @@ def detect_markers(img):
         marker[marker >= 127] = 1
 
         try:
-            marker = validate_and_turn(marker)
+            marker, rotation = validate_and_turn(marker)
             hamming_code = extract_hamming_code(marker)
             marker_id = int(decode(hamming_code), 2)
             markers_list.append(HammingMarker(id=marker_id, contours=approx_curve))
+            orientation_list.append(rotation)
         except ValueError:
             continue
-    return markers_list
+    return markers_list, orientation_list 
